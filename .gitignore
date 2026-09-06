@@ -1,0 +1,15 @@
+*.iml
+.gradle/
+.idea/
+local.properties
+**/build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Firebase client configuration is injected by GitHub Actions.
+app/google-services.json
+
+# Signing material must never be committed.
+*.jks
+*.keystore
