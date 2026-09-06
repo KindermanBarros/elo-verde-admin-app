@@ -5,16 +5,13 @@ import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.eloverde.admin.data.GoogleAuthRepository
 import com.eloverde.admin.data.ReservationRepository
 import com.eloverde.admin.domain.Reservation
 import com.eloverde.admin.domain.ReservationStatus
@@ -22,11 +19,13 @@ import com.google.firebase.auth.FirebaseAuth
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(onAuthenticated: () -> Unit) {
-    var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
+    val context = LocalContext.current
+    val repository = remember { GoogleAuthRepository() }
+    val scope = rememberCoroutineScope()
     var error by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
 
@@ -34,54 +33,39 @@ fun LoginScreen(onAuthenticated: () -> Unit) {
         modifier = Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Elo Verde · Administração", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(20.dp))
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it; error = null },
-            label = { Text("E-mail") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email,
-                imeAction = ImeAction.Next
-            ),
-            modifier = Modifier.fillMaxWidth()
+        Text(
+            "Elo Verde",
+            style = MaterialTheme.typography.displaySmall
         )
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it; error = null },
-            label = { Text("Senha") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done
-            ),
-            modifier = Modifier.fillMaxWidth()
+        Text(
+            "Área administrativa",
+            style = MaterialTheme.typography.titleMedium
         )
-        error?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
-        }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(32.dp))
         Button(
-            enabled = !loading && email.isNotBlank() && password.isNotBlank(),
+            enabled = !loading,
             onClick = {
                 loading = true
-                FirebaseAuth.getInstance()
-                    .signInWithEmailAndPassword(email.trim(), password)
-                    .addOnSuccessListener {
-                        loading = false
-                        onAuthenticated()
-                    }
-                    .addOnFailureListener {
-                        loading = false
-                        error = "E-mail ou senha inválidos."
-                    }
+                error = null
+                scope.launch {
+                    repository.signIn(context)
+                        .onSuccess { onAuthenticated() }
+                        .onFailure {
+                            error = "Não foi possível entrar com sua conta Google."
+                        }
+                    loading = false
+                }
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(if (loading) "Entrando…" else "Entrar")
+            Text(if (loading) "Entrando…" else "Entrar com Google")
+        }
+        error?.let {
+            Text(
+                it,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 12.dp)
+            )
         }
     }
 }
@@ -327,6 +311,10 @@ fun ChartsScreen(padding: PaddingValues) {
 
 @Composable
 fun MoreScreen(padding: PaddingValues) {
+    val context = LocalContext.current
+    val repository = remember { GoogleAuthRepository() }
+    val scope = rememberCoroutineScope()
+
     Column(Modifier.fillMaxSize().padding(padding).padding(20.dp)) {
         Text("Mais", style = MaterialTheme.typography.headlineMedium)
         Text(
@@ -334,7 +322,11 @@ fun MoreScreen(padding: PaddingValues) {
             style = MaterialTheme.typography.bodyMedium
         )
         Spacer(Modifier.height(16.dp))
-        Button(onClick = { FirebaseAuth.getInstance().signOut() }) {
+        Button(
+            onClick = {
+                scope.launch { repository.signOut(context) }
+            }
+        ) {
             Text("Sair")
         }
     }
