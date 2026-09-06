@@ -1,0 +1,72 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/widget_root" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="14dp" android:background="@drawable/widget_background">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+        <TextView android:id="@+id/widget_month" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#0D5037" android:textSize="18sp" android:textStyle="bold"/>
+        <ImageView android:layout_width="28dp" android:layout_height="28dp" android:src="@drawable/ic_widget_leaf" android:contentDescription="@null"/>
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="24dp" android:orientation="horizontal">
+        <TextView style="@style/WidgetWeekday" android:text="D"/>
+        <TextView style="@style/WidgetWeekday" android:text="S"/>
+        <TextView style="@style/WidgetWeekday" android:text="T"/>
+        <TextView style="@style/WidgetWeekday" android:text="Q"/>
+        <TextView style="@style/WidgetWeekday" android:text="Q"/>
+        <TextView style="@style/WidgetWeekday" android:text="S"/>
+        <TextView style="@style/WidgetWeekday" android:text="S"/>
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="vertical">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+                <TextView android:id="@+id/day_1" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_2" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_3" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_4" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_5" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_6" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_7" style="@style/WidgetDay"/>
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+                <TextView android:id="@+id/day_8" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_9" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_10" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_11" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_12" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_13" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_14" style="@style/WidgetDay"/>
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+                <TextView android:id="@+id/day_15" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_16" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_17" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_18" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_19" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_20" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_21" style="@style/WidgetDay"/>
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+                <TextView android:id="@+id/day_22" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_23" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_24" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_25" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_26" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_27" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_28" style="@style/WidgetDay"/>
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+                <TextView android:id="@+id/day_29" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_30" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_31" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_32" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_33" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_34" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_35" style="@style/WidgetDay"/>
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+                <TextView android:id="@+id/day_36" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_37" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_38" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_39" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_40" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_41" style="@style/WidgetDay"/>
+                <TextView android:id="@+id/day_42" style="@style/WidgetDay"/>
+            </LinearLayout>
+    </LinearLayout>
+    <TextView android:id="@+id/widget_summary" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="4dp" android:textColor="#78716C" android:textSize="11sp"/>
+</LinearLayout>
