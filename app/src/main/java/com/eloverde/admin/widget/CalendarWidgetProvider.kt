@@ -16,13 +16,36 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 class CalendarWidgetProvider : AppWidgetProvider() {
+    override fun onReceive(context: Context, intent: Intent) {
+        when (intent.action) {
+            ACTION_PREVIOUS, ACTION_NEXT -> {
+                val widgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
+                if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) return
+                val preferences = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+                val current = preferences.getInt(offsetKey(widgetId), 0)
+                val change = if (intent.action == ACTION_PREVIOUS) -1 else 1
+                preferences.edit().putInt(offsetKey(widgetId), current + change).apply()
+                updateWidget(context, AppWidgetManager.getInstance(context), widgetId)
+            }
+            else -> super.onReceive(context, intent)
+        }
+    }
+
     override fun onUpdate(context: Context, manager: AppWidgetManager, widgetIds: IntArray) {
         widgetIds.forEach { updateWidget(context, manager, it) }
     }
 
+    override fun onDeleted(context: Context, widgetIds: IntArray) {
+        val editor = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE).edit()
+        widgetIds.forEach { editor.remove(offsetKey(it)) }
+        editor.apply()
+    }
+
     private fun updateWidget(context: Context, manager: AppWidgetManager, widgetId: Int) {
         val views = RemoteViews(context.packageName, R.layout.calendar_widget)
-        val month = YearMonth.now()
+        val offset = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+            .getInt(offsetKey(widgetId), 0)
+        val month = YearMonth.now().plusMonths(offset.toLong())
         val locale = Locale.forLanguageTag("pt-BR")
         val monthTitle = month.format(DateTimeFormatter.ofPattern("MMMM yyyy", locale))
             .replaceFirstChar { it.titlecase(locale) }
@@ -33,6 +56,14 @@ class CalendarWidgetProvider : AppWidgetProvider() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         views.setOnClickPendingIntent(R.id.widget_root, openApp)
+        views.setOnClickPendingIntent(
+            R.id.widget_previous,
+            navigationIntent(context, widgetId, ACTION_PREVIOUS, widgetId * 10 + 1)
+        )
+        views.setOnClickPendingIntent(
+            R.id.widget_next,
+            navigationIntent(context, widgetId, ACTION_NEXT, widgetId * 10 + 2)
+        )
         renderDays(views, month, emptyMap())
         manager.updateAppWidget(widgetId, views)
 
@@ -76,7 +107,23 @@ class CalendarWidgetProvider : AppWidgetProvider() {
     }
 
     companion object {
+        private const val ACTION_PREVIOUS = "com.eloverde.admin.widget.PREVIOUS_MONTH"
+        private const val ACTION_NEXT = "com.eloverde.admin.widget.NEXT_MONTH"
+        private const val PREFERENCES = "calendar_widget"
+
+        private fun offsetKey(widgetId: Int) = "month_offset_$widgetId"
+
+        private fun navigationIntent(context: Context, widgetId: Int, action: String, requestCode: Int): PendingIntent {
+            val intent = Intent(context, CalendarWidgetProvider::class.java).apply {
+                this.action = action
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)
+            }
+            return PendingIntent.getBroadcast(
+                context, requestCode, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+
         private val DAY_IDS = intArrayOf(R.id.day_1, R.id.day_2, R.id.day_3, R.id.day_4, R.id.day_5, R.id.day_6, R.id.day_7, R.id.day_8, R.id.day_9, R.id.day_10, R.id.day_11, R.id.day_12, R.id.day_13, R.id.day_14, R.id.day_15, R.id.day_16, R.id.day_17, R.id.day_18, R.id.day_19, R.id.day_20, R.id.day_21, R.id.day_22, R.id.day_23, R.id.day_24, R.id.day_25, R.id.day_26, R.id.day_27, R.id.day_28, R.id.day_29, R.id.day_30, R.id.day_31, R.id.day_32, R.id.day_33, R.id.day_34, R.id.day_35, R.id.day_36, R.id.day_37, R.id.day_38, R.id.day_39, R.id.day_40, R.id.day_41, R.id.day_42)
     }
 }
-
