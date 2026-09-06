@@ -30,14 +30,14 @@ private val colors = lightColorScheme(
 )
 
 private val typography = Typography(
-    displaySmall = TextStyle(FontFamily.SansSerif, FontWeight.Bold, 40.sp, 44.sp),
-    headlineLarge = TextStyle(FontFamily.SansSerif, FontWeight.Bold, 32.sp, 38.sp),
-    headlineMedium = TextStyle(FontFamily.SansSerif, FontWeight.Bold, 28.sp, 34.sp),
-    titleLarge = TextStyle(FontFamily.SansSerif, FontWeight.SemiBold, 22.sp, 28.sp),
-    titleMedium = TextStyle(FontFamily.SansSerif, FontWeight.SemiBold, 17.sp, 23.sp),
-    bodyLarge = TextStyle(FontFamily.SansSerif, FontWeight.Normal, 16.sp, 24.sp),
-    bodyMedium = TextStyle(FontFamily.SansSerif, FontWeight.Normal, 14.sp, 20.sp),
-    labelLarge = TextStyle(FontFamily.SansSerif, FontWeight.SemiBold, 14.sp, 20.sp)
+    displaySmall = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 40.sp, lineHeight = 44.sp),
+    headlineLarge = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 38.sp),
+    headlineMedium = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = 34.sp),
+    titleLarge = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 28.sp),
+    titleMedium = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 23.sp),
+    bodyLarge = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Normal, fontSize = 16.sp, lineHeight = 24.sp),
+    bodyMedium = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 20.sp),
+    labelLarge = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 20.sp)
 )
 
 @Composable fun EloVerdeTheme(content: @Composable () -> Unit) {
