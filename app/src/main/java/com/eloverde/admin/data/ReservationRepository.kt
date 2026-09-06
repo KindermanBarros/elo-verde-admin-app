@@ -1,8 +1,10 @@
 package com.eloverde.admin.data
 
+import com.eloverde.admin.domain.NewReservation
 import com.eloverde.admin.domain.Reservation
 import com.eloverde.admin.domain.ReservationStatus
 import com.google.android.gms.tasks.Task
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -39,6 +41,24 @@ class ReservationRepository(
                 }
                 onResult(reservations)
             }
+
+    fun create(
+        reservation: NewReservation,
+        createdBy: String
+    ): Task<DocumentReference> =
+        db.collection(COLLECTION).add(
+            mapOf(
+                "name" to reservation.name.trim(),
+                "email" to reservation.email.trim(),
+                "phone" to reservation.phone.trim(),
+                "date" to reservation.date,
+                "notes" to reservation.notes.trim(),
+                "status" to ReservationStatus.PENDING.wireValue,
+                "updatedBy" to createdBy,
+                "createdAt" to FieldValue.serverTimestamp(),
+                "updatedAt" to FieldValue.serverTimestamp()
+            )
+        )
 
     fun updateStatus(
         id: String,

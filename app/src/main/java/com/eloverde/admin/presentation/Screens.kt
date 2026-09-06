@@ -89,6 +89,9 @@ fun ReservationsScreen(padding: PaddingValues) {
     var reservations by remember { mutableStateOf<List<Reservation>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
+    var showCreateDialog by rememberSaveable { mutableStateOf(false) }
+    var creating by remember { mutableStateOf(false) }
+    var createError by remember { mutableStateOf<String?>(null) }
 
     DisposableEffect(repository) {
         val listener = repository.observe(
@@ -118,11 +121,47 @@ fun ReservationsScreen(padding: PaddingValues) {
         onDispose { listener.remove() }
     }
 
+    if (showCreateDialog) {
+        NewReservationDialog(
+            saving = creating,
+            error = createError,
+            onDismiss = {
+                showCreateDialog = false
+                createError = null
+            },
+            onConfirm = { reservation ->
+                creating = true
+                createError = null
+                val createdBy = FirebaseAuth.getInstance().currentUser?.email.orEmpty()
+                repository.create(reservation, createdBy)
+                    .addOnSuccessListener {
+                        creating = false
+                        showCreateDialog = false
+                    }
+                    .addOnFailureListener { failure ->
+                        creating = false
+                        createError = failure.message
+                            ?.take(180)
+                            ?: "Não foi possível adicionar a reserva."
+                    }
+            }
+        )
+    }
+
     Column(
         Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp)
     ) {
         Text("Reservas", style = MaterialTheme.typography.headlineMedium)
         Text("${reservations.size} intenção(ões) cadastrada(s)")
+        Button(
+            onClick = {
+                createError = null
+                showCreateDialog = true
+            },
+            modifier = Modifier.padding(top = 12.dp)
+        ) {
+            Text("Adicionar reserva")
+        }
 
         when {
             loading -> CircularProgressIndicator(Modifier.padding(top = 32.dp))
