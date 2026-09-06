@@ -8,12 +8,16 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout full history
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -49,22 +53,28 @@ jobs:
 
           version="${major}.${minor}.${patch}"
           version_code=$((major * 1000000 + minor * 1000 + patch))
-          echo "Version: ${version} (${version_code})"
           {
             echo "should_release=true"
             echo "version=${version}"
             echo "version_code=${version_code}"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Set up Java 17
+        if: steps.version.outputs.should_release == 'true'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
       - name: Set up Gradle
         if: steps.version.outputs.should_release == 'true'
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
         with:
-          gradle-version: '8.10.2'
+          gradle-version: '9.4.1'
 
       - name: Generate Gradle wrapper
         if: steps.version.outputs.should_release == 'true'
-        run: gradle wrapper --gradle-version 8.10.2
+        run: gradle wrapper --gradle-version 9.4.1
 
       - name: Provide Firebase configuration
         if: steps.version.outputs.should_release == 'true'
@@ -77,21 +87,21 @@ jobs:
           fi
           printf '%s' "${GOOGLE_SERVICES_JSON}" > app/google-services.json
 
-      - name: Build Android packages
+      - name: Build installable internal APK
         if: steps.version.outputs.should_release == 'true'
         run: |
-          ./gradlew assembleRelease bundleRelease \
+          ./gradlew clean assembleDebug \
             -PreleaseVersion="${{ steps.version.outputs.version }}" \
             -PreleaseCode="${{ steps.version.outputs.version_code }}"
           mkdir -p release
-          find app/build/outputs -type f \( -name '*.apk' -o -name '*.aab' \) -exec cp {} release/ \;
-          test -n "$(find release -type f -print -quit)"
+          cp app/build/outputs/apk/debug/app-debug.apk \
+            "release/elo-verde-admin-v${{ steps.version.outputs.version }}.apk"
 
       - name: Publish GitHub Release
         if: steps.version.outputs.should_release == 'true'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: Elo Verde Admin v${{ steps.version.outputs.version }}
           generate_release_notes: true
-          files: release/*
+          files: release/*.apk
