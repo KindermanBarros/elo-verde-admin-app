@@ -7,6 +7,17 @@ plugins {
 val releaseVersion = providers.gradleProperty("releaseVersion").orElse("0.0.0").get()
 val releaseCode = providers.gradleProperty("releaseCode").orElse("1").get().toInt()
 
+val internalKeystorePath = providers.gradleProperty("internalKeystorePath").orNull
+val internalKeystorePassword = providers.gradleProperty("internalKeystorePassword").orNull
+val internalKeyAlias = providers.gradleProperty("internalKeyAlias").orNull
+val internalKeyPassword = providers.gradleProperty("internalKeyPassword").orNull
+val hasInternalSigning = listOf(
+    internalKeystorePath,
+    internalKeystorePassword,
+    internalKeyAlias,
+    internalKeyPassword,
+).all { !it.isNullOrBlank() }
+
 android {
     namespace = "com.eloverde.admin"
     compileSdk = 37
@@ -28,12 +39,26 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    signingConfigs {
+        if (hasInternalSigning) {
+            create("internal") {
+                storeFile = file(requireNotNull(internalKeystorePath))
+                storePassword = internalKeystorePassword
+                keyAlias = internalKeyAlias
+                keyPassword = internalKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         debug {
             versionNameSuffix = "-internal"
         }
         release {
             isMinifyEnabled = false
+            if (hasInternalSigning) {
+                signingConfig = signingConfigs.getByName("internal")
+            }
         }
     }
 }

@@ -76,26 +76,50 @@ jobs:
         if: steps.version.outputs.should_release == 'true'
         run: gradle wrapper --gradle-version 9.4.1
 
-      - name: Provide Firebase configuration
+      - name: Restore protected build files
         if: steps.version.outputs.should_release == 'true'
+        shell: bash
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          INTERNAL_KEYSTORE_BASE64: ${{ secrets.INTERNAL_KEYSTORE_BASE64 }}
+          INTERNAL_KEYSTORE_PASSWORD: ${{ secrets.INTERNAL_KEYSTORE_PASSWORD }}
+          INTERNAL_KEY_ALIAS: ${{ secrets.INTERNAL_KEY_ALIAS }}
+          INTERNAL_KEY_PASSWORD: ${{ secrets.INTERNAL_KEY_PASSWORD }}
         run: |
-          if [[ -z "${GOOGLE_SERVICES_JSON}" ]]; then
-            echo "::error::Missing GOOGLE_SERVICES_JSON repository secret."
+          set -euo pipefail
+
+          for secret_name in             GOOGLE_SERVICES_JSON             INTERNAL_KEYSTORE_BASE64             INTERNAL_KEYSTORE_PASSWORD             INTERNAL_KEY_ALIAS             INTERNAL_KEY_PASSWORD
+          do
+            if [[ -z "${!secret_name:-}" ]]; then
+              echo "::error::Missing ${secret_name} repository secret."
+              exit 1
+            fi
+          done
+
+          printf '%s' "$GOOGLE_SERVICES_JSON" > app/google-services.json
+          printf '%s' "$INTERNAL_KEYSTORE_BASE64"             | base64 --decode > "$RUNNER_TEMP/elo-verde-internal.jks"
+          chmod 600 "$RUNNER_TEMP/elo-verde-internal.jks"
+
+      - name: Build signed internal release APK
+        if: steps.version.outputs.should_release == 'true'
+        env:
+          ORG_GRADLE_PROJECT_internalKeystorePath: ${{ runner.temp }}/elo-verde-internal.jks
+          ORG_GRADLE_PROJECT_internalKeystorePassword: ${{ secrets.INTERNAL_KEYSTORE_PASSWORD }}
+          ORG_GRADLE_PROJECT_internalKeyAlias: ${{ secrets.INTERNAL_KEY_ALIAS }}
+          ORG_GRADLE_PROJECT_internalKeyPassword: ${{ secrets.INTERNAL_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          ./gradlew clean assembleRelease             -PreleaseVersion="${{ steps.version.outputs.version }}"             -PreleaseCode="${{ steps.version.outputs.version_code }}"
+
+          mkdir -p release
+          cp app/build/outputs/apk/release/app-release.apk             "release/elo-verde-admin-v${{ steps.version.outputs.version }}.apk"
+
+          apksigner_path="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          if [[ -z "$apksigner_path" ]]; then
+            echo "::error::Android apksigner was not found."
             exit 1
           fi
-          printf '%s' "${GOOGLE_SERVICES_JSON}" > app/google-services.json
-
-      - name: Build installable internal APK
-        if: steps.version.outputs.should_release == 'true'
-        run: |
-          ./gradlew clean assembleDebug \
-            -PreleaseVersion="${{ steps.version.outputs.version }}" \
-            -PreleaseCode="${{ steps.version.outputs.version_code }}"
-          mkdir -p release
-          cp app/build/outputs/apk/debug/app-debug.apk \
-            "release/elo-verde-admin-v${{ steps.version.outputs.version }}.apk"
+          "$apksigner_path" verify --verbose --print-certs             "release/elo-verde-admin-v${{ steps.version.outputs.version }}.apk"
 
       - name: Publish GitHub Release
         if: steps.version.outputs.should_release == 'true'
@@ -105,3 +129,9 @@ jobs:
           name: Elo Verde Admin v${{ steps.version.outputs.version }}
           generate_release_notes: true
           files: release/*.apk
+
+      - name: Remove protected build files
+        if: always()
+        run: |
+          rm -f app/google-services.json
+          rm -f "$RUNNER_TEMP/elo-verde-internal.jks"
