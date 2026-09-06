@@ -7,6 +7,7 @@ enum class ReservationStatus(val wireValue: String) {
     VISIT("Visita");
 
     val label: String get() = wireValue
+    val blocksDate: Boolean get() = this == RESERVED || this == PAID
 
     companion object {
         fun from(value: String?): ReservationStatus =
