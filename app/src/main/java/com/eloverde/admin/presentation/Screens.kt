@@ -50,8 +50,21 @@ fun LoginScreen(onAuthenticated: () -> Unit) {
                 scope.launch {
                     repository.signIn(context)
                         .onSuccess { onAuthenticated() }
-                        .onFailure {
-                            error = "Não foi possível entrar com sua conta Google."
+                        .onFailure { failure ->
+                            val detail = failure.message
+                                ?.replace("\n", " ")
+                                ?.take(180)
+                                ?.takeIf(String::isNotBlank)
+                            error = buildString {
+                                append("Não foi possível entrar com Google")
+                                append(" (")
+                                append(failure.javaClass.simpleName)
+                                append(").")
+                                if (detail != null) {
+                                    append(" ")
+                                    append(detail)
+                                }
+                            }
                         }
                     loading = false
                 }
