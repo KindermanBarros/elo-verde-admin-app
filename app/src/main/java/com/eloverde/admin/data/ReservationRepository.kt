@@ -16,7 +16,7 @@ class ReservationRepository(
         onError: (Exception) -> Unit
     ): ListenerRegistration =
         db.collection(COLLECTION)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .orderBy("updatedAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     onError(error)
@@ -30,9 +30,10 @@ class ReservationRepository(
                         phone = document.getString("phone").orEmpty(),
                         email = document.getString("email").orEmpty(),
                         date = document.getString("date").orEmpty(),
-                        time = document.getString("time").orEmpty(),
+                        notes = document.getString("notes").orEmpty(),
                         status = ReservationStatus.from(document.getString("status")),
                         createdAt = document.getTimestamp("createdAt")?.toDate()?.toInstant(),
+                        updatedAt = document.getTimestamp("updatedAt")?.toDate()?.toInstant(),
                         updatedBy = document.getString("updatedBy").orEmpty()
                     )
                 }
@@ -53,6 +54,6 @@ class ReservationRepository(
         )
 
     private companion object {
-        const val COLLECTION = "reservations"
+        const val COLLECTION = "reservationIntents"
     }
 }

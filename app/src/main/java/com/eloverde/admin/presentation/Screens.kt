@@ -97,9 +97,22 @@ fun ReservationsScreen(padding: PaddingValues) {
                 loading = false
                 error = null
             },
-            onError = {
+            onError = { failure ->
                 loading = false
-                error = "Não foi possível carregar as reservas."
+                val detail = failure.message
+                    ?.replace("\n", " ")
+                    ?.take(180)
+                    ?.takeIf(String::isNotBlank)
+                error = buildString {
+                    append("Não foi possível carregar as reservas")
+                    append(" (")
+                    append(failure.javaClass.simpleName)
+                    append(").")
+                    if (detail != null) {
+                        append(" ")
+                        append(detail)
+                    }
+                }
             }
         )
         onDispose { listener.remove() }
@@ -151,12 +164,13 @@ private fun ReservationCard(
                 reservation.name.ifBlank { "Cliente sem nome" },
                 style = MaterialTheme.typography.titleMedium
             )
-            Text(
-                listOf(reservation.date, reservation.time)
-                    .filter(String::isNotBlank)
-                    .joinToString(" · ")
-                    .ifBlank { "Data não informada" }
-            )
+            Text(reservation.date.ifBlank { "Data não informada" })
+            if (reservation.notes.isNotBlank()) {
+                Text(
+                    reservation.notes,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
             Spacer(Modifier.height(8.dp))
             TextButton(
                 onClick = {
@@ -164,7 +178,7 @@ private fun ReservationCard(
                     val message = Uri.encode(
                         "Olá, ${reservation.name}! Aqui é da Chácara Elo Verde. " +
                             "Recebemos sua intenção de reserva para ${reservation.date} " +
-                            "às ${reservation.time} e gostaríamos de confirmar alguns detalhes."
+                            "e gostaríamos de confirmar alguns detalhes."
                     )
                     context.startActivity(
                         Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/$phone?text=$message"))

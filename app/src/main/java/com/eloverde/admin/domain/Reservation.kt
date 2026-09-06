@@ -8,8 +8,9 @@ data class Reservation(
     val phone: String,
     val email: String,
     val date: String,
-    val time: String,
+    val notes: String,
     val status: ReservationStatus,
     val createdAt: Instant?,
+    val updatedAt: Instant?,
     val updatedBy: String
 )
