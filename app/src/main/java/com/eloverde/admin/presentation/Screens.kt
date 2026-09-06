@@ -101,7 +101,7 @@ fun LoginScreen(onAuthenticated: () -> Unit) {
 }
 
 @Composable
-private fun ScreenHeader(title: String, subtitle: String) {
+internal fun ScreenHeader(title: String, subtitle: String) {
     Column(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 20.dp)) {
         Text("CHÁCARA ELO VERDE", style = MaterialTheme.typography.labelLarge, color = Forest)
         Spacer(Modifier.height(5.dp))
@@ -259,7 +259,7 @@ private fun ReservationCard(
                         Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/$phone?text=$message"))
                     )
                 },
-                enabled = reservation.phone.isNotBlank()
+                enabled = reservation.phone.isNotBlank(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp)
             ) {
