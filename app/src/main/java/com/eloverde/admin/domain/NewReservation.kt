@@ -5,5 +5,6 @@ data class NewReservation(
     val email: String,
     val phone: String,
     val date: String,
-    val notes: String
+    val notes: String,
+    val status: ReservationStatus
 )

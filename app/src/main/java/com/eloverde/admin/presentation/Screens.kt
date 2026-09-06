@@ -16,9 +16,6 @@ import com.eloverde.admin.data.ReservationRepository
 import com.eloverde.admin.domain.Reservation
 import com.eloverde.admin.domain.ReservationStatus
 import com.google.firebase.auth.FirebaseAuth
-import java.time.YearMonth
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlinx.coroutines.launch
 
 @Composable
@@ -195,6 +192,8 @@ private fun ReservationCard(
     val updatedBy = FirebaseAuth.getInstance().currentUser?.email ?: "mobile-admin"
     var menuOpen by remember { mutableStateOf(false) }
     var updating by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
     var updateError by remember { mutableStateOf<String?>(null) }
 
     Card(Modifier.fillMaxWidth()) {
@@ -265,74 +264,54 @@ private fun ReservationCard(
             if (reservation.email.isNotBlank()) {
                 Text(reservation.email, style = MaterialTheme.typography.bodySmall)
             }
+            TextButton(
+                enabled = !updating && !deleting,
+                onClick = { confirmDelete = true }
+            ) {
+                Text("Remover", color = MaterialTheme.colorScheme.error)
+            }
         }
+    }
+
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { if (!deleting) confirmDelete = false },
+            title = { Text("Remover reserva?") },
+            text = {
+                Text("A reserva de ${reservation.name.ifBlank { "este cliente" }} será removida permanentemente.")
+            },
+            confirmButton = {
+                Button(
+                    enabled = !deleting,
+                    onClick = {
+                        deleting = true
+                        updateError = null
+                        repository.remove(reservation.id)
+                            .addOnSuccessListener {
+                                deleting = false
+                                confirmDelete = false
+                            }
+                            .addOnFailureListener { failure ->
+                                deleting = false
+                                updateError = failure.message ?: "Não foi possível remover a reserva."
+                            }
+                    }
+                ) {
+                    Text(if (deleting) "Removendo…" else "Remover")
+                }
+            },
+            dismissButton = {
+                TextButton(enabled = !deleting, onClick = { confirmDelete = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
 
 private fun normalizeBrazilianPhone(rawPhone: String): String {
     val digits = rawPhone.filter(Char::isDigit)
     return if (digits.length in 10..11) "55$digits" else digits
-}
-
-@Composable
-fun CalendarScreen(padding: PaddingValues) {
-    var monthOffset by rememberSaveable { mutableIntStateOf(0) }
-    val month = remember(monthOffset) {
-        YearMonth.now().plusMonths(monthOffset.toLong())
-    }
-    val locale = remember { Locale.forLanguageTag("pt-BR") }
-    val title = remember(month, locale) {
-        month.format(DateTimeFormatter.ofPattern("MMMM yyyy", locale))
-            .replaceFirstChar { it.titlecase(locale) }
-    }
-
-    Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-        Text("Calendário", style = MaterialTheme.typography.headlineMedium)
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            TextButton(onClick = { monthOffset-- }) { Text("‹ Anterior") }
-            Text(
-                title,
-                modifier = Modifier.padding(top = 12.dp),
-                style = MaterialTheme.typography.titleMedium
-            )
-            TextButton(onClick = { monthOffset++ }) { Text("Próximo ›") }
-        }
-        Spacer(Modifier.height(12.dp))
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            listOf("D", "S", "T", "Q", "Q", "S", "S").forEach {
-                Text(it, style = MaterialTheme.typography.labelMedium)
-            }
-        }
-
-        val firstDayOffset = month.atDay(1).dayOfWeek.value % 7
-        val cells = List(firstDayOffset) { null } +
-            (1..month.lengthOfMonth()).map(month::atDay)
-
-        cells.chunked(7).forEach { week ->
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                week.forEach { day ->
-                    Text(
-                        day?.dayOfMonth?.toString().orEmpty(),
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
-                repeat(7 - week.size) { Spacer(Modifier.width(38.dp)) }
-            }
-        }
-        Text(
-            "Use as setas para paginar os meses. Os dias são apenas informativos.",
-            style = MaterialTheme.typography.bodySmall
-        )
-    }
 }
 
 @Composable

@@ -53,7 +53,7 @@ class ReservationRepository(
                 "phone" to reservation.phone.trim(),
                 "date" to reservation.date,
                 "notes" to reservation.notes.trim(),
-                "status" to ReservationStatus.PENDING.wireValue,
+                "status" to reservation.status.wireValue,
                 "updatedBy" to createdBy,
                 "createdAt" to FieldValue.serverTimestamp(),
                 "updatedAt" to FieldValue.serverTimestamp()
@@ -72,6 +72,9 @@ class ReservationRepository(
                 "updatedAt" to FieldValue.serverTimestamp()
             )
         )
+
+    fun remove(id: String): Task<Void> =
+        db.collection(COLLECTION).document(id).delete()
 
     private companion object {
         const val COLLECTION = "reservationIntents"
