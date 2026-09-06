@@ -3,12 +3,28 @@ plugins { id("com.android.application"); id("org.jetbrains.kotlin.android"); id(
 val releaseVersion = providers.gradleProperty("releaseVersion").orElse("0.0.0").get()
 val releaseCode = providers.gradleProperty("releaseCode").orElse("1").get().toInt()
 
-android { namespace = "com.eloverde.admin"; compileSdk = 35
-    defaultConfig { applicationId = "com.eloverde.admin"; minSdk = 26; targetSdk = 35
+android {
+    namespace = "com.eloverde.admin"
+    compileSdk = 35
+
+    defaultConfig {
+        applicationId = "com.eloverde.admin"
+        minSdk = 26
+        targetSdk = 35
         versionCode = releaseCode
         versionName = releaseVersion
     }
+
+    // Keep Java and Kotlin bytecode targets aligned for Gradle 8+ validation.
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
 }
+
 dependencies {
     implementation(platform("androidx.compose:compose-bom:2025.01.00"))
     implementation("androidx.activity:activity-compose:1.10.1")
