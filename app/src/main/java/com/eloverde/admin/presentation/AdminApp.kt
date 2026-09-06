@@ -1,20 +1,20 @@
 package com.eloverde.admin.presentation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.EventNote
+import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.google.firebase.auth.FirebaseAuth
 
 private enum class Destination(val label: String, val icon: ImageVector) {
-    RESERVAS("Reservas", Icons.Default.List),
-    CALENDARIO("Calendário", Icons.Default.DateRange),
-    GRAFICOS("Gráficos", Icons.Default.BarChart),
-    MAIS("Mais", Icons.Default.MoreHoriz)
+    RESERVAS("Reservas", Icons.Default.EventNote),
+    CALENDARIO("Calendário", Icons.Default.CalendarMonth),
+    GRAFICOS("Métricas", Icons.Default.Insights),
+    MAIS("Perfil", Icons.Default.Person)
 }
 
 @Composable
@@ -35,14 +35,20 @@ fun AdminApp() {
 
     var destination by remember { mutableStateOf(Destination.RESERVAS) }
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            NavigationBar {
+            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                 Destination.entries.forEach { item ->
                     NavigationBarItem(
                         selected = destination == item,
                         onClick = { destination = item },
                         icon = { Icon(item.icon, item.label) },
-                        label = { Text(item.label) }
+                        label = { Text(item.label) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     )
                 }
             }

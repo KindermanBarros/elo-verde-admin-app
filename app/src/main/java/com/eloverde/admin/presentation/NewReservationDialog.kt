@@ -20,6 +20,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +59,7 @@ fun NewReservationDialog(
 
     AlertDialog(
         onDismissRequest = { if (!saving) onDismiss() },
+        shape = RoundedCornerShape(28.dp),
         title = { Text("Nova reserva") },
         text = {
             Column(

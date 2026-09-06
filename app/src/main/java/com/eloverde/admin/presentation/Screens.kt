@@ -3,18 +3,28 @@ package com.eloverde.admin.presentation
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.eloverde.admin.data.GoogleAuthRepository
 import com.eloverde.admin.data.ReservationRepository
 import com.eloverde.admin.domain.Reservation
 import com.eloverde.admin.domain.ReservationStatus
+import com.eloverde.admin.presentation.theme.*
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
@@ -26,18 +36,20 @@ fun LoginScreen(onAuthenticated: () -> Unit) {
     var error by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.Center
+    Box(
+        modifier = Modifier.fillMaxSize().background(
+            Brush.verticalGradient(listOf(ForestDark, Forest, Color(0xFF23815C)))
+        ).padding(24.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            "Elo Verde",
-            style = MaterialTheme.typography.displaySmall
-        )
-        Text(
-            "Área administrativa",
-            style = MaterialTheme.typography.titleMedium
-        )
+      Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(32.dp), colors = CardDefaults.cardColors(containerColor = WarmSurface)) {
+       Column(Modifier.padding(horizontal = 28.dp, vertical = 36.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(Modifier.size(88.dp).clip(CircleShape).background(Mint), contentAlignment = Alignment.Center) {
+            Icon(Icons.Default.Park, null, Modifier.size(48.dp), tint = Forest)
+        }
+        Spacer(Modifier.height(24.dp))
+        Text("Elo Verde", style = MaterialTheme.typography.headlineLarge, color = ForestDark)
+        Text("Administração da chácara", color = StoneMuted)
         Spacer(Modifier.height(32.dp))
         Button(
             enabled = !loading,
@@ -66,9 +78,13 @@ fun LoginScreen(onAuthenticated: () -> Unit) {
                     loading = false
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().height(54.dp),
+            shape = RoundedCornerShape(16.dp)
         ) {
-            Text(if (loading) "Entrando…" else "Entrar com Google")
+            if (loading) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
+            else Icon(Icons.Default.AccountCircle, null)
+            Spacer(Modifier.width(10.dp))
+            Text(if (loading) "Entrando…" else "Continuar com Google")
         }
         error?.let {
             Text(
@@ -77,6 +93,20 @@ fun LoginScreen(onAuthenticated: () -> Unit) {
                 modifier = Modifier.padding(top = 12.dp)
             )
         }
+        Spacer(Modifier.height(14.dp))
+        Text("Acesso exclusivo da equipe", color = StoneMuted, style = MaterialTheme.typography.bodyMedium)
+       }
+      }
+    }
+}
+
+@Composable
+private fun ScreenHeader(title: String, subtitle: String) {
+    Column(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 20.dp)) {
+        Text("CHÁCARA ELO VERDE", style = MaterialTheme.typography.labelLarge, color = Forest)
+        Spacer(Modifier.height(5.dp))
+        Text(title, style = MaterialTheme.typography.headlineMedium)
+        Text(subtitle, color = StoneMuted)
     }
 }
 
@@ -148,15 +178,17 @@ fun ReservationsScreen(padding: PaddingValues) {
     Column(
         Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp)
     ) {
-        Text("Reservas", style = MaterialTheme.typography.headlineMedium)
-        Text("${reservations.size} intenção(ões) cadastrada(s)")
+        ScreenHeader("Reservas", "${reservations.size} registros para acompanhar")
         Button(
             onClick = {
                 createError = null
                 showCreateDialog = true
             },
-            modifier = Modifier.padding(top = 12.dp)
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            shape = RoundedCornerShape(16.dp)
         ) {
+            Icon(Icons.Default.Add, null)
+            Spacer(Modifier.width(8.dp))
             Text("Adicionar reserva")
         }
 
@@ -196,13 +228,18 @@ private fun ReservationCard(
     var confirmDelete by remember { mutableStateOf(false) }
     var updateError by remember { mutableStateOf<String?>(null) }
 
-    Card(Modifier.fillMaxWidth()) {
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
         Column(Modifier.padding(16.dp)) {
             Text(
                 reservation.name.ifBlank { "Cliente sem nome" },
                 style = MaterialTheme.typography.titleMedium
             )
-            Text(reservation.date.ifBlank { "Data não informada" })
+            Text(reservation.date.ifBlank { "Data não informada" }, color = StoneMuted)
             if (reservation.notes.isNotBlank()) {
                 Text(
                     reservation.notes,
@@ -210,7 +247,7 @@ private fun ReservationCard(
                 )
             }
             Spacer(Modifier.height(8.dp))
-            TextButton(
+            Button(
                 onClick = {
                     val phone = normalizeBrazilianPhone(reservation.phone)
                     val message = Uri.encode(
@@ -223,14 +260,20 @@ private fun ReservationCard(
                     )
                 },
                 enabled = reservation.phone.isNotBlank()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp)
             ) {
-                Text(reservation.phone.ifBlank { "Telefone não informado" })
+                Icon(Icons.Default.Chat, null, Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("WhatsApp · ${reservation.phone.ifBlank { "sem telefone" }}")
             }
 
             Box {
                 OutlinedButton(
                     onClick = { menuOpen = true },
-                    enabled = !updating
+                    enabled = !updating,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp)
                 ) {
                     Text(if (updating) "Atualizando…" else reservation.status.label)
                 }
@@ -333,24 +376,29 @@ fun ChartsScreen(padding: PaddingValues) {
         }
     }
 
-    Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-        Text("Gráficos", style = MaterialTheme.typography.headlineMedium)
-        Text("Resumo das intenções de reserva")
-        Spacer(Modifier.height(16.dp))
-        ReservationStatus.entries.forEach { status ->
-            ListItem(
-                headlineContent = { Text(status.label) },
-                trailingContent = {
-                    Text(
-                        counts.getValue(status).toString(),
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                }
-            )
-            HorizontalDivider()
+    Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 18.dp)) {
+        ScreenHeader("Métricas", "Uma visão rápida da operação")
+        Card(
+            Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(containerColor = Forest)
+        ) {
+            Column(Modifier.padding(24.dp)) {
+                Icon(Icons.Default.AutoGraph, null, tint = Color.White)
+                Spacer(Modifier.height(16.dp))
+                Text(reservations.size.toString(), style = MaterialTheme.typography.displaySmall, color = Color.White)
+                Text("reservas cadastradas", color = Color.White.copy(alpha = .82f))
+            }
         }
-        Spacer(Modifier.height(12.dp))
-        Text("Total: ${reservations.size}", style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(18.dp))
+        ReservationStatus.entries.forEach { status ->
+            Card(Modifier.fillMaxWidth().padding(bottom = 10.dp), shape = RoundedCornerShape(20.dp)) {
+                Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(status.label, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                    Text(counts.getValue(status).toString(), style = MaterialTheme.typography.titleLarge, color = Forest)
+                }
+            }
+        }
     }
 }
 
@@ -360,18 +408,31 @@ fun MoreScreen(padding: PaddingValues) {
     val repository = remember { GoogleAuthRepository() }
     val scope = rememberCoroutineScope()
 
-    Column(Modifier.fillMaxSize().padding(padding).padding(20.dp)) {
-        Text("Mais", style = MaterialTheme.typography.headlineMedium)
-        Text(
-            FirebaseAuth.getInstance().currentUser?.email.orEmpty(),
-            style = MaterialTheme.typography.bodyMedium
-        )
+    val user = FirebaseAuth.getInstance().currentUser
+    Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 18.dp)) {
+        ScreenHeader("Perfil", "Conta e acesso administrativo")
+        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp)) {
+            Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(56.dp).clip(CircleShape).background(Mint), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.Person, null, tint = Forest, modifier = Modifier.size(30.dp))
+                }
+                Spacer(Modifier.width(14.dp))
+                Column {
+                    Text(user?.displayName ?: "Administrador", style = MaterialTheme.typography.titleMedium)
+                    Text(user?.email.orEmpty(), style = MaterialTheme.typography.bodyMedium, color = StoneMuted)
+                }
+            }
+        }
         Spacer(Modifier.height(16.dp))
-        Button(
+        OutlinedButton(
             onClick = {
                 scope.launch { repository.signOut(context) }
-            }
+            },
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            shape = RoundedCornerShape(16.dp)
         ) {
+            Icon(Icons.Default.Logout, null)
+            Spacer(Modifier.width(8.dp))
             Text("Sair")
         }
     }

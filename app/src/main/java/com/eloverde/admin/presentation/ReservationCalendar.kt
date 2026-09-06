@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,19 +27,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.eloverde.admin.data.ReservationRepository
 import com.eloverde.admin.domain.Reservation
 import com.eloverde.admin.domain.ReservationStatus
+import com.eloverde.admin.presentation.theme.*
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val BlockedDay = Color(0xFFCDEBD4)
-private val VisitDay = Color(0xFFDDEBFA)
-private val PendingDay = Color(0xFFFFE8B5)
-private val FreeDay = Color(0xFFF5F5F5)
+private val BlockedDay = Mint
+private val VisitDay = BlueSoft
+private val PendingDay = AmberSoft
+private val FreeDay = Color.Transparent
 
 @Composable
 fun CalendarScreen(padding: PaddingValues) {
@@ -73,8 +77,10 @@ fun CalendarScreen(padding: PaddingValues) {
         reservations.filter { it.date.isNotBlank() }.groupBy(Reservation::date)
     }
 
-    Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-        Text("Calendário", style = MaterialTheme.typography.headlineMedium)
+    Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 18.dp)) {
+        ScreenHeader("Calendário", "Disponibilidade e visitas em um só lugar")
+      Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp)) {
+       Column(Modifier.padding(14.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             TextButton(onClick = { monthOffset-- }) { Text("‹ Anterior") }
             Text(title, modifier = Modifier.padding(top = 12.dp), style = MaterialTheme.typography.titleMedium)
@@ -138,7 +144,9 @@ fun CalendarScreen(padding: PaddingValues) {
         }
 
         Spacer(Modifier.height(12.dp))
-        Text("Verde: reservado/quitado • Azul: visita • Amarelo: pendente")
+        Text("Verde: reservado/quitado • Azul: visita • Amarelo: pendente", style = MaterialTheme.typography.bodyMedium)
         Text("Somente as setas mudam o mês. Os dias são informativos.", style = MaterialTheme.typography.bodySmall)
+       }
+      }
     }
 }
