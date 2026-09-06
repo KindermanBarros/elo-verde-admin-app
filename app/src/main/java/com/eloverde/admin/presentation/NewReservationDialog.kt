@@ -20,6 +20,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.SelectableDates
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.eloverde.admin.domain.NewReservation
 import com.eloverde.admin.domain.ReservationStatus
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneOffset
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,6 +41,7 @@ import java.time.ZoneOffset
 fun NewReservationDialog(
     saving: Boolean,
     error: String?,
+    blockedDates: Set<String>,
     onDismiss: () -> Unit,
     onConfirm: (NewReservation) -> Unit
 ) {
@@ -102,7 +105,21 @@ fun NewReservationDialog(
     )
 
     if (showDatePicker) {
-        val datePickerState = androidx.compose.material3.rememberDatePickerState()
+        val selectableDates = remember(blockedDates) {
+            object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    val day = Instant.ofEpochMilli(utcTimeMillis)
+                        .atZone(ZoneOffset.UTC)
+                        .toLocalDate()
+                    return !day.isBefore(LocalDate.now()) && day.toString() !in blockedDates
+                }
+
+                override fun isSelectableYear(year: Int): Boolean = year >= LocalDate.now().year
+            }
+        }
+        val datePickerState = androidx.compose.material3.rememberDatePickerState(
+            selectableDates = selectableDates
+        )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
@@ -114,6 +131,16 @@ fun NewReservationDialog(
                 }) { Text("Confirmar") }
             },
             dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") } }
-        ) { DatePicker(state = datePickerState) }
+        ) {
+            Column {
+                DatePicker(state = datePickerState)
+                Text(
+                    "Datas esmaecidas já estão reservadas ou quitadas.",
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }

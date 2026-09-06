@@ -149,9 +149,15 @@ fun ReservationsScreen(padding: PaddingValues) {
     }
 
     if (showCreateDialog) {
+        val blockedDates = reservations
+            .filter { it.status.blocksDate }
+            .map(Reservation::date)
+            .filter(String::isNotBlank)
+            .toSet()
         NewReservationDialog(
             saving = creating,
             error = createError,
+            blockedDates = blockedDates,
             onDismiss = {
                 showCreateDialog = false
                 createError = null
