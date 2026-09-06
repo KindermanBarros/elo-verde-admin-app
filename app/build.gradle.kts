@@ -30,7 +30,6 @@ android {
 
     buildTypes {
         debug {
-            applicationIdSuffix = ".internal"
             versionNameSuffix = "-internal"
         }
         release {
