@@ -4,10 +4,10 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -216,7 +216,7 @@ fun ReservationsScreen(padding: PaddingValues) {
                 }
             }
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             FilterChip(selected = statusFilter == "TODOS", onClick = { statusFilter = "TODOS" }, label = { Text("Todas") })
             FilterChip(selected = statusFilter == ReservationStatus.PENDING.name, onClick = { statusFilter = ReservationStatus.PENDING.name }, label = { Text("Pendentes") })
             FilterChip(selected = statusFilter == ReservationStatus.RESERVED.name, onClick = { statusFilter = ReservationStatus.RESERVED.name }, label = { Text("Reservadas") })
