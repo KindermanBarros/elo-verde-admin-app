@@ -23,6 +23,12 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Source
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -58,6 +64,8 @@ fun CalendarScreen(padding: PaddingValues) {
     var error by remember { mutableStateOf<String?>(null) }
     var monthOffset by rememberSaveable { mutableIntStateOf(0) }
     var selectedDate by rememberSaveable { mutableStateOf<String?>(null) }
+    var refreshing by remember { mutableStateOf(false) }
+    var refreshError by remember { mutableStateOf<String?>(null) }
 
     DisposableEffect(repository) {
         val listener = repository.observe(
@@ -85,7 +93,32 @@ fun CalendarScreen(padding: PaddingValues) {
     }
 
     Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 18.dp)) {
-        ScreenHeader("Calendário", "Disponibilidade e visitas em um só lugar")
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.weight(1f)) {
+                ScreenHeader("Calendário", "Disponibilidade e visitas em um só lugar")
+            }
+            IconButton(
+                enabled = !refreshing,
+                onClick = {
+                    refreshing = true
+                    refreshError = null
+                    FirebaseFirestore.getInstance().collection("reservationIntents")
+                        .get(Source.SERVER)
+                        .addOnSuccessListener {
+                            // The active Firestore listener updates the displayed reservations.
+                            refreshing = false
+                        }
+                        .addOnFailureListener {
+                            refreshError = "Não foi possível atualizar. Verifique a conexão e tente novamente."
+                            refreshing = false
+                        }
+                }
+            ) {
+                if (refreshing) CircularProgressIndicator(Modifier.width(22.dp).height(22.dp), strokeWidth = 2.dp)
+                else Icon(Icons.Default.Refresh, contentDescription = "Atualizar calendário")
+            }
+        }
+        refreshError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
       Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp)) {
        Column(Modifier.padding(14.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
