@@ -9,6 +9,8 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.DocumentChange
+import com.google.firebase.firestore.MetadataChanges
 
 class ReservationRepository(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
@@ -42,6 +44,45 @@ class ReservationRepository(
                 onResult(reservations)
             }
 
+    fun observeNewExternalReservations(
+        onReservation: (Reservation) -> Unit,
+        onError: (Exception) -> Unit
+    ): ListenerRegistration {
+        var initialized = false
+        return db.collection(COLLECTION)
+            .addSnapshotListener(MetadataChanges.INCLUDE) { snapshot, error ->
+                if (error != null) {
+                    onError(error)
+                    return@addSnapshotListener
+                }
+                if (snapshot == null || snapshot.metadata.isFromCache) return@addSnapshotListener
+                if (!initialized) {
+                    initialized = true
+                    return@addSnapshotListener
+                }
+                snapshot.documentChanges
+                    .filter { it.type == DocumentChange.Type.ADDED && !it.document.metadata.hasPendingWrites() }
+                    .forEach { change ->
+                        val doc = change.document
+                        if (doc.getString("source") == "admin-app" || doc.getString("createdBy")?.isNotBlank() == true) return@forEach
+                        onReservation(
+                            Reservation(
+                                id = doc.id,
+                                name = doc.getString("name").orEmpty(),
+                                phone = doc.getString("phone").orEmpty(),
+                                email = doc.getString("email").orEmpty(),
+                                date = doc.getString("date").orEmpty(),
+                                notes = doc.getString("notes").orEmpty(),
+                                status = ReservationStatus.from(doc.getString("status")),
+                                createdAt = doc.getTimestamp("createdAt")?.toDate()?.toInstant(),
+                                updatedAt = doc.getTimestamp("updatedAt")?.toDate()?.toInstant(),
+                                updatedBy = doc.getString("updatedBy").orEmpty()
+                            )
+                        )
+                    }
+            }
+    }
+
     fun create(
         reservation: NewReservation,
         createdBy: String
@@ -55,6 +96,8 @@ class ReservationRepository(
                 "notes" to reservation.notes.trim(),
                 "status" to reservation.status.wireValue,
                 "updatedBy" to createdBy,
+                "createdBy" to createdBy,
+                "source" to "admin-app",
                 "createdAt" to FieldValue.serverTimestamp(),
                 "updatedAt" to FieldValue.serverTimestamp()
         )

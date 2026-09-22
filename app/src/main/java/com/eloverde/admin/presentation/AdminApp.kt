@@ -1,5 +1,15 @@
 package com.eloverde.admin.presentation
 
+import android.Manifest
+import android.os.Build
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import com.eloverde.admin.ReservationNotifications
+import com.eloverde.admin.data.ReservationRepository
+import com.eloverde.admin.widget.WidgetRefresh
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.EventNote
@@ -33,6 +43,31 @@ fun AdminApp() {
         return
     }
 
+    val context = LocalContext.current
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { }
+    LaunchedEffect(user?.uid) {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+    val repository = remember { ReservationRepository() }
+    DisposableEffect(user?.uid) {
+        val listener = repository.observe(
+            onResult = { WidgetRefresh.request(context) },
+            onError = { }
+        )
+        val externalListener = repository.observeNewExternalReservations(
+            onReservation = { ReservationNotifications.show(context, it) },
+            onError = { }
+        )
+        onDispose {
+            listener.remove()
+            externalListener.remove()
+        }
+    }
     var destination by remember { mutableStateOf(Destination.RESERVAS) }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,

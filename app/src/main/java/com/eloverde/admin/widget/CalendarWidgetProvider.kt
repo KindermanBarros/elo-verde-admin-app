@@ -3,6 +3,7 @@ package com.eloverde.admin.widget
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.view.View
@@ -10,6 +11,7 @@ import android.widget.RemoteViews
 import com.eloverde.admin.MainActivity
 import com.eloverde.admin.R
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Source
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -26,6 +28,12 @@ class CalendarWidgetProvider : AppWidgetProvider() {
                 val change = if (intent.action == ACTION_PREVIOUS) -1 else 1
                 preferences.edit().putInt(offsetKey(widgetId), current + change).apply()
                 updateWidget(context, AppWidgetManager.getInstance(context), widgetId)
+            }
+            ACTION_REFRESH -> {
+                val widgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
+                if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                    updateWidget(context, AppWidgetManager.getInstance(context), widgetId)
+                }
             }
             else -> super.onReceive(context, intent)
         }
@@ -61,13 +69,17 @@ class CalendarWidgetProvider : AppWidgetProvider() {
             navigationIntent(context, widgetId, ACTION_PREVIOUS, widgetId * 10 + 1)
         )
         views.setOnClickPendingIntent(
+            R.id.widget_refresh,
+            navigationIntent(context, widgetId, ACTION_REFRESH, widgetId * 10 + 3)
+        )
+        views.setOnClickPendingIntent(
             R.id.widget_next,
             navigationIntent(context, widgetId, ACTION_NEXT, widgetId * 10 + 2)
         )
         renderDays(views, month, emptyMap())
         manager.updateAppWidget(widgetId, views)
 
-        FirebaseFirestore.getInstance().collection("reservationIntents").get()
+        FirebaseFirestore.getInstance().collection("reservationIntents").get(Source.SERVER)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val records = task.result.documents.mapNotNull { doc ->
@@ -78,9 +90,12 @@ class CalendarWidgetProvider : AppWidgetProvider() {
                     val total = records.values.sumOf { it.size }
                     views.setTextViewText(R.id.widget_summary, "$total registro(s) neste mês · toque para abrir")
                 } else {
-                    views.setTextViewText(R.id.widget_summary, "Abra o app para atualizar as reservas")
+                    views.setTextViewText(R.id.widget_summary, "Não foi possível atualizar · toque em ↻ para tentar novamente")
                 }
-                manager.updateAppWidget(widgetId, views)
+                // Do not overwrite a more recent month navigation while this request was running.
+                val latestOffset = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+                    .getInt(offsetKey(widgetId), 0)
+                if (latestOffset == offset) manager.updateAppWidget(widgetId, views)
             }
     }
 
@@ -107,6 +122,11 @@ class CalendarWidgetProvider : AppWidgetProvider() {
     }
 
     companion object {
+        const val ACTION_REFRESH = "com.eloverde.admin.widget.REFRESH"
+        fun refreshAll(context: Context, manager: AppWidgetManager = AppWidgetManager.getInstance(context), ids: IntArray = manager.getAppWidgetIds(ComponentName(context, CalendarWidgetProvider::class.java))) {
+            ids.forEach { CalendarWidgetProvider().updateWidget(context, manager, it) }
+        }
+
         private const val ACTION_PREVIOUS = "com.eloverde.admin.widget.PREVIOUS_MONTH"
         private const val ACTION_NEXT = "com.eloverde.admin.widget.NEXT_MONTH"
         private const val PREFERENCES = "calendar_widget"
