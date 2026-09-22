@@ -29,7 +29,12 @@ class CalendarWidgetProvider : AppWidgetProvider() {
                 preferences.edit().putInt(offsetKey(widgetId), current + change).apply()
                 updateWidget(context, AppWidgetManager.getInstance(context), widgetId)
             }
-            ACTION_REFRESH -> refreshAll(context)
+            ACTION_REFRESH -> {
+                val widgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
+                if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                    updateWidget(context, AppWidgetManager.getInstance(context), widgetId)
+                }
+            }
             else -> super.onReceive(context, intent)
         }
     }
@@ -64,6 +69,10 @@ class CalendarWidgetProvider : AppWidgetProvider() {
             navigationIntent(context, widgetId, ACTION_PREVIOUS, widgetId * 10 + 1)
         )
         views.setOnClickPendingIntent(
+            R.id.widget_refresh,
+            navigationIntent(context, widgetId, ACTION_REFRESH, widgetId * 10 + 3)
+        )
+        views.setOnClickPendingIntent(
             R.id.widget_next,
             navigationIntent(context, widgetId, ACTION_NEXT, widgetId * 10 + 2)
         )
@@ -81,7 +90,7 @@ class CalendarWidgetProvider : AppWidgetProvider() {
                     val total = records.values.sumOf { it.size }
                     views.setTextViewText(R.id.widget_summary, "$total registro(s) neste mês · toque para abrir")
                 } else {
-                    views.setTextViewText(R.id.widget_summary, "Abra o app para atualizar as reservas")
+                    views.setTextViewText(R.id.widget_summary, "Não foi possível atualizar · toque em ↻ para tentar novamente")
                 }
                 // Do not overwrite a more recent month navigation while this request was running.
                 val latestOffset = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
