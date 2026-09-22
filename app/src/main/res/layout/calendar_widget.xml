@@ -3,7 +3,7 @@
         <ImageButton android:id="@+id/widget_previous" android:layout_width="36dp" android:layout_height="36dp" android:padding="8dp" android:background="@android:color/transparent" android:src="@drawable/ic_widget_previous" android:contentDescription="Mês anterior"/>
         <TextView android:id="@+id/widget_month" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:textColor="#0D5037" android:textSize="17sp" android:textStyle="bold"/>
         <ImageButton android:id="@+id/widget_next" android:layout_width="36dp" android:layout_height="36dp" android:padding="8dp" android:background="@android:color/transparent" android:src="@drawable/ic_widget_next" android:contentDescription="Próximo mês"/>
-        <ImageView android:layout_width="28dp" android:layout_height="28dp" android:src="@drawable/ic_widget_leaf" android:contentDescription="@null"/>
+        <ImageButton android:id="@+id/widget_refresh" android:layout_width="36dp" android:layout_height="36dp" android:padding="8dp" android:background="@android:color/transparent" android:src="@drawable/ic_widget_refresh" android:contentDescription="Atualizar reservas"/>
     </LinearLayout>
     <LinearLayout android:layout_width="match_parent" android:layout_height="24dp" android:orientation="horizontal">
         <TextView style="@style/WidgetWeekday" android:text="D"/>
