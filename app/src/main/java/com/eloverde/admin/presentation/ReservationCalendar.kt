@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -82,7 +84,7 @@ fun CalendarScreen(padding: PaddingValues) {
         reservations.filter { it.date.isNotBlank() }.groupBy(Reservation::date)
     }
 
-    Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 18.dp)) {
+    Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 18.dp)) {
         ScreenHeader("Calendário", "Disponibilidade e visitas em um só lugar")
       Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp)) {
        Column(Modifier.padding(14.dp)) {
