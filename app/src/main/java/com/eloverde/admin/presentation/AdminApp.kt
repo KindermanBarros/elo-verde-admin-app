@@ -2,6 +2,8 @@ package com.eloverde.admin.presentation
 
 import android.Manifest
 import android.os.Build
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
@@ -46,7 +48,8 @@ fun AdminApp() {
         ActivityResultContracts.RequestPermission()
     ) { }
     LaunchedEffect(user?.uid) {
-        if (Build.VERSION.SDK_INT >= 33) {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
