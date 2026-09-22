@@ -3,6 +3,7 @@ package com.eloverde.admin.widget
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.view.View
@@ -10,6 +11,7 @@ import android.widget.RemoteViews
 import com.eloverde.admin.MainActivity
 import com.eloverde.admin.R
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Source
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -27,6 +29,7 @@ class CalendarWidgetProvider : AppWidgetProvider() {
                 preferences.edit().putInt(offsetKey(widgetId), current + change).apply()
                 updateWidget(context, AppWidgetManager.getInstance(context), widgetId)
             }
+            ACTION_REFRESH -> refreshAll(context)
             else -> super.onReceive(context, intent)
         }
     }
@@ -67,7 +70,7 @@ class CalendarWidgetProvider : AppWidgetProvider() {
         renderDays(views, month, emptyMap())
         manager.updateAppWidget(widgetId, views)
 
-        FirebaseFirestore.getInstance().collection("reservationIntents").get()
+        FirebaseFirestore.getInstance().collection("reservationIntents").get(Source.SERVER)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val records = task.result.documents.mapNotNull { doc ->
@@ -80,7 +83,10 @@ class CalendarWidgetProvider : AppWidgetProvider() {
                 } else {
                     views.setTextViewText(R.id.widget_summary, "Abra o app para atualizar as reservas")
                 }
-                manager.updateAppWidget(widgetId, views)
+                // Do not overwrite a more recent month navigation while this request was running.
+                val latestOffset = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+                    .getInt(offsetKey(widgetId), 0)
+                if (latestOffset == offset) manager.updateAppWidget(widgetId, views)
             }
     }
 
@@ -107,6 +113,11 @@ class CalendarWidgetProvider : AppWidgetProvider() {
     }
 
     companion object {
+        const val ACTION_REFRESH = "com.eloverde.admin.widget.REFRESH"
+        fun refreshAll(context: Context, manager: AppWidgetManager = AppWidgetManager.getInstance(context), ids: IntArray = manager.getAppWidgetIds(ComponentName(context, CalendarWidgetProvider::class.java))) {
+            ids.forEach { CalendarWidgetProvider().updateWidget(context, manager, it) }
+        }
+
         private const val ACTION_PREVIOUS = "com.eloverde.admin.widget.PREVIOUS_MONTH"
         private const val ACTION_NEXT = "com.eloverde.admin.widget.NEXT_MONTH"
         private const val PREFERENCES = "calendar_widget"
