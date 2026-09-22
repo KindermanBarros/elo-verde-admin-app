@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -119,6 +121,8 @@ fun ReservationsScreen(padding: PaddingValues) {
     var showCreateDialog by rememberSaveable { mutableStateOf(false) }
     var creating by remember { mutableStateOf(false) }
     var createError by remember { mutableStateOf<String?>(null) }
+    var search by rememberSaveable { mutableStateOf("") }
+    var statusFilter by rememberSaveable { mutableStateOf("TODOS") }
 
     DisposableEffect(repository) {
         val listener = repository.observe(
@@ -198,6 +202,30 @@ fun ReservationsScreen(padding: PaddingValues) {
             Text("Adicionar reserva")
         }
 
+        Spacer(Modifier.height(12.dp))
+        OutlinedTextField(
+            value = search,
+            onValueChange = { search = it },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            label = { Text("Buscar por nome, telefone ou data") },
+            leadingIcon = { Icon(Icons.Default.Search, null) },
+            trailingIcon = {
+                if (search.isNotEmpty()) IconButton(onClick = { search = "" }) {
+                    Icon(Icons.Default.Close, "Limpar busca")
+                }
+            }
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            FilterChip(selected = statusFilter == "TODOS", onClick = { statusFilter = "TODOS" }, label = { Text("Todas") })
+            FilterChip(selected = statusFilter == ReservationStatus.PENDING.name, onClick = { statusFilter = ReservationStatus.PENDING.name }, label = { Text("Pendentes") })
+            FilterChip(selected = statusFilter == ReservationStatus.RESERVED.name, onClick = { statusFilter = ReservationStatus.RESERVED.name }, label = { Text("Reservadas") })
+        }
+        val visibleReservations = reservations.filter { reservation ->
+            (statusFilter == "TODOS" || reservation.status.name == statusFilter) &&
+                (search.isBlank() || listOf(reservation.name, reservation.phone, reservation.email, reservation.date)
+                    .any { it.contains(search.trim(), ignoreCase = true) })
+        }
         when {
             loading -> CircularProgressIndicator(Modifier.padding(top = 32.dp))
             error != null -> Text(
@@ -209,11 +237,12 @@ fun ReservationsScreen(padding: PaddingValues) {
                 "Nenhuma reserva encontrada.",
                 modifier = Modifier.padding(top = 32.dp)
             )
+            visibleReservations.isEmpty() -> Text("Nenhuma reserva corresponde aos filtros.", modifier = Modifier.padding(top = 24.dp))
             else -> LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                items(reservations, key = Reservation::id) { reservation ->
+                items(visibleReservations, key = Reservation::id) { reservation ->
                     ReservationCard(reservation, repository)
                 }
             }
