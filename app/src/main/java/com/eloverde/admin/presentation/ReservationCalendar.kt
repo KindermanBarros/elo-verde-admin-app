@@ -1,11 +1,13 @@
 package com.eloverde.admin.presentation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +26,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -37,6 +40,7 @@ import com.eloverde.admin.domain.Reservation
 import com.eloverde.admin.domain.ReservationStatus
 import com.eloverde.admin.presentation.theme.*
 import java.time.YearMonth
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -52,6 +56,7 @@ fun CalendarScreen(padding: PaddingValues) {
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var monthOffset by rememberSaveable { mutableIntStateOf(0) }
+    var selectedDate by rememberSaveable { mutableStateOf<String?>(null) }
 
     DisposableEffect(repository) {
         val listener = repository.observe(
@@ -97,6 +102,7 @@ fun CalendarScreen(padding: PaddingValues) {
             return@Column
         }
 
+        TextButton(onClick = { monthOffset = 0; selectedDate = LocalDate.now().toString() }) { Text("Ir para hoje") }
         Spacer(Modifier.height(12.dp))
         Row(Modifier.fillMaxWidth()) {
             listOf("D", "S", "T", "Q", "Q", "S", "S").forEach {
@@ -129,6 +135,7 @@ fun CalendarScreen(padding: PaddingValues) {
                             .padding(2.dp)
                             .aspectRatio(0.9f)
                             .background(color, RoundedCornerShape(10.dp))
+                            .then(if (day != null) Modifier.clickable { selectedDate = day.toString() } else Modifier)
                             .padding(5.dp)
                     ) {
                         if (day != null) {
@@ -145,9 +152,30 @@ fun CalendarScreen(padding: PaddingValues) {
         }
 
         Spacer(Modifier.height(12.dp))
-        Text("Verde: reservado/quitado • Azul: visita • Amarelo: pendente", style = MaterialTheme.typography.bodyMedium)
-        Text("Somente as setas mudam o mês. Os dias são informativos.", style = MaterialTheme.typography.bodySmall)
+        CalendarLegendItem(BlockedDay, "Reservado ou quitado", "Data indisponível")
+        CalendarLegendItem(VisitDay, "Visita", "Visita agendada")
+        CalendarLegendItem(PendingDay, "Pendente", "Aguardando contato")
+        CalendarLegendItem(MaterialTheme.colorScheme.surface, "Livre", "Sem reservas registradas")
+        selectedDate?.let { date ->
+            val selected = reservationsByDate[date].orEmpty()
+            Text("Reservas em $date", style = MaterialTheme.typography.titleMedium)
+            if (selected.isEmpty()) Text("Nenhum registro neste dia.")
+            selected.forEach { reservation ->
+                Text("• ${reservation.name.ifBlank { "Cliente sem nome" }} — ${reservation.status.label}")
+            }
+        }
        }
       }
+    }
+}
+
+@Composable
+private fun CalendarLegendItem(color: Color, label: String, description: String) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.width(16.dp).height(16.dp).background(color, RoundedCornerShape(5.dp)))
+        Column(Modifier.padding(start = 10.dp)) {
+            Text(label, style = MaterialTheme.typography.labelLarge)
+            Text(description, style = MaterialTheme.typography.bodySmall)
+        }
     }
 }
