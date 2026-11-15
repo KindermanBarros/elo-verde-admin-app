@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import com.eloverde.admin.ReservationNotifications
+import com.eloverde.admin.AdminDeviceRegistration
 import com.eloverde.admin.data.ReservationRepository
 import com.eloverde.admin.widget.WidgetRefresh
 import androidx.compose.material.icons.Icons
@@ -19,6 +20,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.google.firebase.auth.FirebaseAuth
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 private enum class Destination(val label: String, val icon: ImageVector) {
     RESERVAS("Reservas", Icons.Default.EventNote),
@@ -44,10 +47,13 @@ fun AdminApp() {
     }
 
     val context = LocalContext.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { }
     LaunchedEffect(user?.uid) {
+        ReservationNotifications.ensureChannel(context)
+        AdminDeviceRegistration.registerCurrentToken()
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -60,7 +66,10 @@ fun AdminApp() {
             onError = { }
         )
         val externalListener = repository.observeNewExternalReservations(
-            onReservation = { ReservationNotifications.show(context, it) },
+            onReservation = {
+                if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED))
+                    ReservationNotifications.show(context, it)
+            },
             onError = { }
         )
         onDispose {
