@@ -56,7 +56,7 @@ fun AdminApp() {
     val repository = remember { ReservationRepository() }
     DisposableEffect(user?.uid) {
         val listener = repository.observe(
-            onResult = { WidgetRefresh.request(context) },
+            onResult = { WidgetRefresh.request(context, it) },
             onError = { }
         )
         val externalListener = repository.observeNewExternalReservations(
