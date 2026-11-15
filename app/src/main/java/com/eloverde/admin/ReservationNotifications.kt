@@ -15,14 +15,18 @@ import com.eloverde.admin.domain.Reservation
 object ReservationNotifications {
     private const val CHANNEL_ID = "external_reservations"
 
+    fun ensureChannel(context: Context) {
+        context.getSystemService(NotificationManager::class.java).createNotificationChannel(
+            NotificationChannel(CHANNEL_ID, "Novas reservas", NotificationManager.IMPORTANCE_DEFAULT)
+        )
+    }
+
     fun show(context: Context, reservation: Reservation) {
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) return
         val manager = context.getSystemService(NotificationManager::class.java)
-        manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "Novas reservas", NotificationManager.IMPORTANCE_DEFAULT)
-        )
+        ensureChannel(context)
         val openApp = PendingIntent.getActivity(
             context, 0, Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
