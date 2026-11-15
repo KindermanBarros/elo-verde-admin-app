@@ -10,6 +10,7 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import com.eloverde.admin.R
+import com.eloverde.admin.AdminDeviceRegistration
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
@@ -61,6 +62,7 @@ class GoogleAuthRepository(
     }
 
     suspend fun signOut(context: Context) {
+        AdminDeviceRegistration.unregisterCurrentToken()
         auth.signOut()
         runCatching {
             CredentialManager.create(context)
