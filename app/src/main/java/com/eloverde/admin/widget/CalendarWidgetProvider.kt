@@ -10,6 +10,7 @@ import android.view.View
 import android.widget.RemoteViews
 import com.eloverde.admin.MainActivity
 import com.eloverde.admin.R
+import com.eloverde.admin.domain.Reservation
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
 import java.time.LocalDate
@@ -49,7 +50,7 @@ class CalendarWidgetProvider : AppWidgetProvider() {
         editor.apply()
     }
 
-    private fun updateWidget(context: Context, manager: AppWidgetManager, widgetId: Int) {
+    private fun updateWidget(context: Context, manager: AppWidgetManager, widgetId: Int, reservations: List<Reservation>? = null) {
         val views = RemoteViews(context.packageName, R.layout.calendar_widget)
         val offset = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
             .getInt(offsetKey(widgetId), 0)
@@ -78,6 +79,17 @@ class CalendarWidgetProvider : AppWidgetProvider() {
         )
         renderDays(views, month, emptyMap())
         manager.updateAppWidget(widgetId, views)
+
+        if (reservations != null) {
+            val records = reservations.mapNotNull { reservation ->
+                runCatching { LocalDate.parse(reservation.date) }.getOrNull()
+                    ?.let { it to reservation.status.wireValue }
+            }.filter { YearMonth.from(it.first) == month }.groupBy({ it.first }, { it.second })
+            renderDays(views, month, records)
+            views.setTextViewText(R.id.widget_summary, "${records.values.sumOf { it.size }} registro(s) neste mês · toque para abrir")
+            manager.updateAppWidget(widgetId, views)
+            return
+        }
 
         FirebaseFirestore.getInstance().collection("reservationIntents").get(Source.SERVER)
             .addOnCompleteListener { task ->
@@ -123,8 +135,8 @@ class CalendarWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val ACTION_REFRESH = "com.eloverde.admin.widget.REFRESH"
-        fun refreshAll(context: Context, manager: AppWidgetManager = AppWidgetManager.getInstance(context), ids: IntArray = manager.getAppWidgetIds(ComponentName(context, CalendarWidgetProvider::class.java))) {
-            ids.forEach { CalendarWidgetProvider().updateWidget(context, manager, it) }
+        fun refreshAll(context: Context, manager: AppWidgetManager = AppWidgetManager.getInstance(context), ids: IntArray = manager.getAppWidgetIds(ComponentName(context, CalendarWidgetProvider::class.java)), reservations: List<Reservation>? = null) {
+            ids.forEach { CalendarWidgetProvider().updateWidget(context, manager, it, reservations) }
         }
 
         private const val ACTION_PREVIOUS = "com.eloverde.admin.widget.PREVIOUS_MONTH"
